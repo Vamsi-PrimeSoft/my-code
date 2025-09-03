@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Medicine Scheduler</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f6f9;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h1, h2 {
+            color: #333;
+        }
+
+        form {
+            background: #fff;
+            padding: 20px;
+            margin: 15px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            width: 400px;
+        }
+
+        label {
+            display: block;
+            font-weight: bold;
+            margin: 8px 0 4px;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="number"] {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 12px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+
+        input[type="checkbox"] {
+            margin-right: 6px;
+        }
+
+        button {
+            background-color: #007BFF;
+            border: none;
+            color: white;
+            padding: 10px 15px;
+            text-align: center;
+            font-size: 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        hr {
+            border: none;
+            border-top: 1px solid #ddd;
+            margin: 30px 0;
+            width: 100%;
+            max-width: 600px;
+        }
+
+        ul {
+            list-style-type: none;
+            padding: 0;
+            width: 100%;
+            max-width: 600px;
+        }
+
+        li {
+            background: #fff;
+            margin: 10px 0;
+            padding: 12px;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+        }
+
+        li span {
+            font-size: 15px;
+            font-weight: 500;
+            color: #444;
+        }
+
+        li form {
+            background: none;
+            box-shadow: none;
+            padding: 0;
+            margin: 0;
+            width: auto;
+        }
+
+        li form input[type="number"] {
+            width: 70px;
+            display: inline-block;
+            margin-right: 8px;
+        }
+
+        li form label {
+            font-weight: normal;
+            margin: 0 6px 0 0;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+    <h1>💊 Medicine Scheduler</h1>
+
+    <!-- Add New Family + Medicine -->
+    <form action="/save" method="post">
+        <label>Name:</label>
+        <input type="text" name="name" required/>
+
+        <label>Email:</label>
+        <input type="email" name="email" required/>
+
+        <label>Tablet Name:</label>
+        <input type="text" name="tablet" required/>
+
+        <label>Quantity:</label>
+        <input type="number" name="quantity" required/>
+
+        <label>Time to take:</label>
+        <input type="checkbox" name="times" value="Morning"/> Morning
+        <input type="checkbox" name="times" value="Afternoon"/> Afternoon
+        <input type="checkbox" name="times" value="Night"/> Night
+
+        <button type="submit">💾 Save</button>
+    </form>
+
+    <hr/>
+
+    <!-- Saved Medicines -->
+    <h2>📋 Saved Medicines</h2>
+    <ul>
+        <li th:each="m : ${medicines}">
+            <span th:text="${m.name} + ' - ' + ${m.quantity} + ' (' + ${m.schedule} + ') for ' + ${m.family.name}"></span>
+
+            <!-- ✅ Restock Form -->
+            <form th:action="@{/restock}" method="post">
+                <input type="hidden" name="medicineId" th:value="${m.id}"/>
+                <label>Restock:</label>
+                <input type="number" name="addQty" min="1" required/>
+                <button type="submit">➕ Add</button>
+            </form>
+        </li>
+    </ul>
+</body>
+</html>
