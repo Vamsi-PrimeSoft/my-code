@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Medicine Scheduler</title>
+    <style>
+        /* 🌙 Theme Variables */
+        :root {
+            --bg-color: #f9fafb;
+            --text-color: #222;
+            --card-bg: #ffffff;
+            --input-border: #ddd;
+            --button-bg: #2563eb;
+            --button-hover: #1d4ed8;
+            --danger-bg: #ef4444;
+            --danger-hover: #b91c1c;
+            --edit-bg: #10b981;
+            --edit-hover: #059669;
+        }
+        body.dark {
+            --bg-color: #18181b;
+            --text-color: #f4f4f5;
+            --card-bg: #27272a;
+            --input-border: #444;
+            --button-bg: #3b82f6;
+            --button-hover: #1d4ed8;
+            --danger-bg: #f87171;
+            --danger-hover: #dc2626;
+            --edit-bg: #34d399;
+            --edit-hover: #059669;
+        }
+        * { box-sizing: border-box; }
+        body {
+            font-family: "Segoe UI", Roboto, sans-serif;
+            background: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            transition: background 0.3s, color 0.3s;
+        }
+        h1, h2 {
+            font-weight: 600;
+            text-align: center;
+            margin: 0;
+        }
+        h1 { font-size: 1.8rem; }
+        h2 { font-size: 1.4rem; margin-top: 25px; }
+
+        /* 🌟 Header */
+        .header {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 18px 40px;
+            position: relative;
+        }
+        .logo-title { text-align: center; flex-grow: 1; }
+        .theme-toggle-btn {
+            position: absolute;
+            right: 40px;
+            background: none;
+            border: none;
+            font-size: 22px;
+            cursor: pointer;
+            color: var(--text-color);
+        }
+
+        /* 📝 Horizontal Add Form */
+        .horizontal-form {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            align-items: flex-end;
+            justify-content: center;
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+            max-width: 95%;
+            margin: 20px auto;
+        }
+        .horizontal-form .form-group { display: flex; flex-direction: column; min-width: 140px; }
+        .horizontal-form label { font-size: 13px; margin-bottom: 4px; font-weight: 500; }
+        .horizontal-form input {
+            padding: 8px 10px;
+            border: 1px solid var(--input-border);
+            border-radius: 8px;
+            min-width: 140px;
+        }
+        .horizontal-form button { align-self: flex-end; margin-top: 18px; }
+
+        /* 🎨 Buttons */
+        button {
+            border: none;
+            color: white;
+            padding: 10px 16px;
+            font-size: 14px;
+            font-weight: 500;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .add-btn { background-color: var(--button-bg); }
+        .add-btn:hover { background-color: var(--button-hover); }
+        .edit-btn { background-color: var(--edit-bg); }
+        .edit-btn:hover { background-color: var(--edit-hover); }
+        .danger-btn { background-color: var(--danger-bg); }
+        .danger-btn:hover { background-color: var(--danger-hover); }
+        .toggle-btn { background-color: #6b7280; }
+        .toggle-btn:hover { background-color: #4b5563; }
+
+        /* 📋 Medicines List */
+        #saved-medicines { display: none; } /* hidden by default */
+        ul {
+            list-style: none;
+            padding: 0;
+            width: 100%;
+            max-width: 600px;
+            margin: auto;
+        }
+        li {
+            background: var(--card-bg);
+            margin: 12px 0;
+            padding: 16px;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+            transition: background 0.3s;
+        }
+        li span {
+            font-size: 15px;
+            font-weight: 500;
+            display: block;
+            margin-bottom: 10px;
+        }
+        .actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .restock-form { display: flex; gap: 10px; align-items: center; flex-grow: 1; }
+        .restock-form input { flex: 1; margin: 0; }
+
+        /* ✏ Edit Form */
+        .edit-form {
+            display: none;
+            margin-top: 12px;
+            padding: 14px;
+            border-radius: 10px;
+            border: 1px solid var(--input-border);
+            background: var(--card-bg);
+        }
+    </style>
+
+    <script>
+        function toggleEdit(id) {
+            const form = document.getElementById('edit-form-' + id);
+            form.style.display = form.style.display === 'none' ? 'block' : 'none';
+        }
+        function toggleTheme() {
+            document.body.classList.toggle('dark');
+            const icon = document.getElementById('theme-icon');
+            if (document.body.classList.contains('dark')) {
+                icon.textContent = '🌙';
+                localStorage.setItem('theme', 'dark');
+            } else {
+                icon.textContent = '☀️';
+                localStorage.setItem('theme', 'light');
+            }
+        }
+        function toggleSaved() {
+            const section = document.getElementById("saved-medicines");
+            const btn = document.getElementById("toggle-saved-btn");
+            if (section.style.display === "none") {
+                section.style.display = "block";
+                btn.textContent = "🙈 Hide Saved Medicines";
+            } else {
+                section.style.display = "none";
+                btn.textContent = "📋 View Saved Medicines";
+            }
+        }
+        window.onload = function () {
+            if (localStorage.getItem('theme') === 'dark') {
+                document.body.classList.add('dark');
+                document.getElementById('theme-icon').textContent = '🌙';
+            }
+        }
+    </script>
+</head>
+<body>
+    <!-- 🌟 Header -->
+    <div class="header">
+        <div class="logo-title">
+            <h1>💊 Medicine Scheduler</h1>
+        </div>
+        <button class="theme-toggle-btn" onclick="toggleTheme()">
+            <span id="theme-icon">☀️</span>
+        </button>
+    </div>
+
+    <!-- 📝 Add Medicine Form (Horizontal) -->
+    <form action="/save" method="post" class="horizontal-form">
+        <div class="form-group">
+            <label>Name:</label>
+            <input type="text" name="name" required/>
+        </div>
+        <div class="form-group">
+            <label>Email:</label>
+            <input type="email" name="email" required/>
+        </div>
+        <div class="form-group">
+            <label>Tablet:</label>
+            <input type="text" name="tablet" required/>
+        </div>
+        <div class="form-group">
+            <label>Qty:</label>
+            <input type="number" name="quantity" required/>
+        </div>
+        <div class="form-group">
+            <label>Morning:</label>
+            <input type="time" name="morningTime"/>
+        </div>
+        <div class="form-group">
+            <label>Afternoon:</label>
+            <input type="time" name="afternoonTime"/>
+        </div>
+        <div class="form-group">
+            <label>Night:</label>
+            <input type="time" name="nightTime"/>
+        </div>
+        <div class="form-group">
+            <button type="submit" class="add-btn">💾 Save</button>
+        </div>
+    </form>
+
+    <!-- Toggle Button -->
+    <div style="text-align:center; margin-top:20px;">
+        <button id="toggle-saved-btn" class="toggle-btn" onclick="toggleSaved()">📋 View Saved Medicines</button>
+    </div>
+
+    <!-- 📋 Saved Medicines (hidden by default) -->
+    <div id="saved-medicines">
+        <h2>📋 Saved Medicines</h2>
+        <ul>
+            <li th:each="m : ${medicines}">
+                <span th:text="${m.name} + ' - ' + ${m.quantity} 
+                    + ' (Morning: ' + (${m.morningTime} != null ? ${#temporals.format(m.morningTime, 'hh:mm a')} : 'N/A')
+                    + ', Afternoon: ' + (${m.afternoonTime} != null ? ${#temporals.format(m.afternoonTime, 'hh:mm a')} : 'N/A')
+                    + ', Night: ' + (${m.nightTime} != null ? ${#temporals.format(m.nightTime, 'hh:mm a')} : 'N/A')
+                    + ') for ' + ${m.family.name}">
+                </span>
+
+                <div class="actions">
+                    <!-- Restock Inline -->
+                    <form th:action="@{/restock}" method="post" class="restock-form">
+                        <input type="hidden" name="medicineId" th:value="${m.id}"/>
+                        <input type="number" name="addQty" min="1" placeholder="Restock qty" required/>
+                        <button type="submit" class="add-btn">➕ Add</button>
+                    </form>
+
+                    <!-- Edit -->
+                    <button type="button" th:onclick="'toggleEdit(' + ${m.id} + ')'" class="edit-btn">✏ Edit</button>
+
+                    <!-- Delete -->
+                    <form th:action="@{/delete-family}" method="post" 
+                          onsubmit="return confirm('Delete this user and all their medicines?');">
+                        <input type="hidden" name="familyId" th:value="${m.family.id}"/>
+                        <button type="submit" class="danger-btn">🗑 Delete</button>
+                    </form>
+                </div>
+
+                <!-- Edit Form -->
+                <div th:id="'edit-form-' + ${m.id}" class="edit-form">
+                    <form th:action="@{/update}" method="post">
+                        <input type="hidden" name="id" th:value="${m.id}"/>
+                        <input type="hidden" name="family.id" th:value="${m.family.id}"/>
+
+                        <label>Family Name:</label>
+                        <input type="text" name="familyName" th:value="${m.family.name}" required/>
+
+                        <label>Email:</label>
+                        <input type="email" name="familyEmail" th:value="${m.family.email}" required/>
+
+                        <label>Tablet Name:</label>
+                        <input type="text" name="name" th:value="${m.name}" required/>
+
+                        <label>Quantity:</label>
+                        <input type="number" name="quantity" th:value="${m.quantity}" required/>
+
+                        <label>Morning Time:</label>
+                        <input type="time" name="morningTime" th:value="${m.morningTime}"/>
+
+                        <label>Afternoon Time:</label>
+                        <input type="time" name="afternoonTime" th:value="${m.afternoonTime}"/>
+
+                        <label>Night Time:</label>
+                        <input type="time" name="nightTime" th:value="${m.nightTime}"/>
+
+                        <button type="submit" class="edit-btn" style="width:100%;">💾 Update</button>
+                    </form>
+                </div>
+            </li>
+        </ul>
+    </div>
+</body>
+</html>
