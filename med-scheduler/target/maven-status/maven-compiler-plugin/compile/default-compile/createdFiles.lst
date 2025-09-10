@@ -1,8 +1,0 @@
-com\medscheduler\repository\MedicineRepository.class
-com\medscheduler\controller\MainController.class
-com\medscheduler\entity\Family.class
-com\medscheduler\MedSchedulerApplication.class
-com\medscheduler\service\MedicineScheduler.class
-com\medscheduler\entity\Medicine.class
-com\medscheduler\repository\FamilyRepository.class
-com\medscheduler\service\EmailService.class
